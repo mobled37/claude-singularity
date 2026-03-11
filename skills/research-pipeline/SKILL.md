@@ -124,51 +124,71 @@ State is persisted to `.omc/research-pipeline/{session-id}/` for resume capabili
    g. Update `pipeline.json`: stage 1 status = `complete`
    h. **Verification**: Confirm output contains weakness analysis for EVERY paper
 
-2. **Stage 2 - Gap Search** (Find compensatory papers):
+2. **Stage 2 - Gap Search** (Find compensatory papers + download PDFs):
    a. Read Stage 1 output (`stage-1-paper-review.md`)
    b. Read the agent prompt template from `agents/gap-scout.md`
    c. Extract the top weaknesses across all papers (prioritize baseline weaknesses)
-   d. For each major weakness, search for papers that address it:
+   d. Create the `related_papers/` directory inside the paper directory:
+      ```bash
+      mkdir -p {paper-directory}/related_papers
+      ```
+   e. For each major weakness, search for papers that address it:
       - Use WebSearch to find relevant papers (Semantic Scholar, arXiv, Google Scholar)
       - Cross-disciplinary search is encouraged (the area doesn't matter)
       - For each found paper, note: title, authors, year, venue, URL, and how it addresses the weakness
-   e. Spawn a Sonnet-tier agent:
+      - **Download the paper PDF** into `{paper-directory}/related_papers/` using curl
+   f. Spawn a Sonnet-tier agent:
       ```
       Agent(prompt="[Read agents/gap-scout.md for full instructions]
       You are a research paper scout. Given these weaknesses from our literature review:
       [Include weaknesses from Stage 1]
       Research goal: [goal]
       Search the web for papers that address each weakness. Use WebSearch and WebFetch.
-      Cross-disciplinary papers are welcome -- the area doesn't matter as long as the technique is relevant.",
+      Cross-disciplinary papers are welcome -- the area doesn't matter as long as the technique is relevant.
+
+      IMPORTANT - Paper Downloads:
+      For every relevant paper you find, download its PDF into this directory:
+        {paper-directory}/related_papers/
+      Use Bash with curl to download:
+        curl -L -o '{paper-directory}/related_papers/{FirstAuthor}_{Year}_{ShortTitle}.pdf' '{pdf_url}'
+      Track download status for each paper: [DOWNLOADED], [DOWNLOAD_FAILED], or [NO_PDF_AVAILABLE].
+      Verify each download with ls -la.",
       subagent_type="general-purpose", model="sonnet")
       ```
-   f. Save output to `stage-2-gap-search.md`
-   g. Update `pipeline.json`: stage 2 status = `complete`
-   h. **Verification**: Confirm at least 1 compensatory paper found per major weakness
+   g. Save output to `stage-2-gap-search.md`
+   h. Update `pipeline.json`: stage 2 status = `complete`
+   i. **Verification**: Confirm at least 1 compensatory paper found per major weakness
+   j. **Verification**: Confirm downloaded PDFs exist in `{paper-directory}/related_papers/` with non-zero size
 
 3. **Stage 3 - Paper Summarization** (Structured summaries):
    a. Read Stage 1 output (original paper analyses) and Stage 2 output (found papers)
    b. Read the agent prompt template from `agents/paper-summarizer.md`
-   c. Create structured summaries for ALL papers (both original references and newly found ones)
-   d. For each paper, produce:
+   c. Read downloaded related papers from `{paper-directory}/related_papers/` using the Read tool (PDF support)
+   d. Create structured summaries for ALL papers (both original references and downloaded related papers)
+   e. For each paper, produce:
       - **One-paragraph summary** (problem, approach, key result)
       - **Core technique** (the main algorithmic/methodological contribution)
       - **Key equations/formulations** (if applicable)
       - **Strengths and limitations** (from Stage 1 or new analysis)
       - **Relevance to goal** (how this paper relates to the research goal)
-   e. Create a **comparative table** showing all papers side-by-side
-   f. Spawn a Sonnet-tier agent:
+   f. Create a **comparative table** showing all papers side-by-side
+   g. Spawn a Sonnet-tier agent:
       ```
       Agent(prompt="[Read agents/paper-summarizer.md for full instructions]
       You are an expert research summarizer. Create structured summaries of all these papers.
       Paper analyses: [Include Stage 1 output]
       Found papers: [Include Stage 2 output]
       Research goal: [goal]
+
+      IMPORTANT - Downloaded Related Papers:
+      Stage 2 downloaded related paper PDFs into: {paper-directory}/related_papers/
+      Read these PDFs using the Read tool to produce deeper summaries of the found papers
+      (not just abstract-level summaries from Stage 2 URLs).
       Also create a comparative table and complementarity map.",
       subagent_type="general-purpose", model="sonnet")
       ```
-   g. Save output to `stage-3-summaries.md`
-   h. Update `pipeline.json`: stage 3 status = `complete`
+   h. Save output to `stage-3-summaries.md`
+   i. Update `pipeline.json`: stage 3 status = `complete`
 
 ---
 
@@ -378,6 +398,7 @@ Agent(prompt="[Stage 6: Arch Expert]...", model="opus")      // Fire
     {"filename": "paper1.pdf", "isBaseline": false},
     {"filename": "baseline_method.pdf", "isBaseline": true}
   ],
+  "relatedPapersDir": "{paperDir}/related_papers",
   "status": "in_progress",
   "currentPhase": "analysis",
   "stages": [
@@ -534,11 +555,21 @@ When the skill is re-invoked:
 **Found Papers:**
 1. **{Title}** ({Authors}, {Year}, {Venue})
    - URL: {url}
+   - PDF: `[DOWNLOADED]` → `related_papers/{FirstAuthor}_{Year}_{ShortTitle}.pdf`
    - Relevance: {how it addresses the weakness}
    - Key technique: {what technique it offers}
 
 ## Cross-Disciplinary Findings
 {Papers from unexpected domains that offer relevant techniques}
+
+## Download Summary
+| Paper | Filename | Status |
+|-------|----------|--------|
+| {Title} | `{filename}.pdf` | DOWNLOADED |
+| {Title} | — | DOWNLOAD_FAILED: {reason} |
+
+- Total downloaded: {count} / {total found}
+- Download directory: `{paper-directory}/related_papers/`
 ```
 
 ### Stage 7 Output: Proposal Synthesis (KEY OUTPUT)
