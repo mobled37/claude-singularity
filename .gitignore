@@ -1,0 +1,6 @@
+# OMC state files (session-specific)
+.omc/state/
+.omc/research-pipeline/
+
+# Claude settings
+.claude/settings.local.json

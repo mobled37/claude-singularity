@@ -1,0 +1,18 @@
+{
+  "name": "claude-research",
+  "version": "0.1.0",
+  "description": "Research paper analysis pipeline with 8 stages: 3 sequential analysis, 3 parallel proposal, and 2 convergence stages",
+  "author": {
+    "name": "kylee"
+  },
+  "license": "MIT",
+  "keywords": [
+    "claude-code",
+    "plugin",
+    "research",
+    "paper-analysis",
+    "multi-agent",
+    "pipeline"
+  ],
+  "skills": "./skills/"
+}
