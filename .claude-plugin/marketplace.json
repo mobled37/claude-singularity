@@ -1,0 +1,27 @@
+{
+  "$schema": "https://anthropic.com/claude-code/marketplace.schema.json",
+  "name": "claude-singularity",
+  "description": "Research paper analysis pipeline with multi-agent orchestration",
+  "owner": {
+    "name": "kylee"
+  },
+  "plugins": [
+    {
+      "name": "claude-research",
+      "description": "Research paper analysis pipeline with 8 stages: 3 sequential analysis, 3 parallel proposal, and 2 convergence stages for systematic academic research assistance.",
+      "version": "0.1.0",
+      "author": {
+        "name": "kylee"
+      },
+      "source": "./",
+      "category": "productivity",
+      "tags": [
+        "research",
+        "paper-analysis",
+        "multi-agent",
+        "pipeline"
+      ]
+    }
+  ],
+  "version": "0.1.0"
+}
